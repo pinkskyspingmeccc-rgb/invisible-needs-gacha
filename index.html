@@ -75,27 +75,30 @@
         .game-section { display: none; }
         .game-section.active { display: block; }
 
-        /* 扭蛋機樣式 */
-        .gacha-machine {
-            background: #ffb6c1;
-            border: 4px solid #ff007f;
-            border-radius: 20px;
-            padding: 20px;
+        /* 嵌入自訂扭蛋機圖片樣式 */
+        .gacha-machine-container {
             margin: 15px auto;
-            max-width: 300px;
+            max-width: 320px;
             position: relative;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
         }
-        .gacha-screen {
+        .gacha-image {
+            width: 100%;
+            height: auto;
+            display: block;
+            border: 3px solid #7f00ff;
+            box-shadow: 3px 3px 0px #000;
+        }
+        .gacha-screen-text {
             background: #e6e6fa;
-            border: 3px dashed #7f00ff;
-            border-radius: 10px;
-            padding: 15px;
-            min-height: 120px;
+            border: 2px dashed #ff007f;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            min-height: 50px;
             display: flex;
-            flex-direction: column;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
         }
 
         /* 拼圖進度條 */
@@ -106,7 +109,7 @@
             margin: 15px 0;
         }
         .puzzle-piece {
-            width: 60px;
+            width: 75px;
             height: 60px;
             border: 2px dashed #808080;
             background: #eee;
@@ -189,6 +192,18 @@
             box-shadow: none;
         }
 
+        /* 活動規則區塊 */
+        .rules-box {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f0f0f0;
+            border: 1px solid #808080;
+            font-size: 12px;
+            text-align: left;
+            color: #555;
+            line-height: 1.4;
+        }
+
         /* 彈出視窗 */
         .popup-overlay {
             display: none;
@@ -215,10 +230,11 @@
             <div class="subtitle">擁抱多元，看見看不見的需求 ⚡</div>
 
             <div id="stage-gacha" class="game-section active">
-                <p><strong>第一步：嘗試了解隱性障礙！</strong><br>請點擊下方按鈕，從扭蛋機中隨機抽出並認識一種隱性障礙，集滿 3 塊不同的拼圖即可解鎖大轉盤抽獎！</p>
+                <p><strong>第一步：嘗試了解隱性障礙！</strong><br>請點擊下方按鈕，抽出一種隱性障礙，集滿 3 塊不同的拼圖即可解鎖大轉盤抽獎！</p>
                 
-                <div class="gacha-machine">
-                    <div id="gacha-display" class="gacha-screen">
+                <div class="gacha-machine-container">
+                    <img src="gacha-machine.png" alt="扭蛋機" class="gacha-image">
+                    <div id="gacha-display" class="gacha-screen-text">
                         <span>🔮 點擊 PUSH 開始抽扭蛋</span>
                     </div>
                 </div>
@@ -227,8 +243,8 @@
 
                 <p style="margin-top:20px; font-weight:bold;">🧩 我的拼圖收集進度 (<span id="puzzle-count">0</span>/3)：</p>
                 <div class="puzzle-container">
-                    <div id="p1" class="puzzle-piece">情緒障礙</div>
-                    <div id="p2" class="puzzle-piece">自閉症</div>
+                    <div id="p1" class="puzzle-piece">學習障礙</div>
+                    <div id="p2" class="puzzle-piece">情緒障礙</div>
                     <div id="p3" class="puzzle-piece">ADHD</div>
                 </div>
                 
@@ -244,6 +260,12 @@
                 </div>
 
                 <button id="btn-spin" class="btn" style="background:#7f00ff;" onclick="spinWheel()">SPIN 開始抽獎</button>
+            </div>
+
+            <div class="rules-box">
+                📌 活動重要規則：<br>
+                1. 本活動最終解釋及保留權歸社區中心所有。<br>
+                2. 禮物數量有限，送完即止。
             </div>
 
         </div>
@@ -263,30 +285,26 @@
     </div>
 
     <script>
-        // 遊戲狀態變數
         let collectedPuzzles = { p1: false, p2: false, p3: false };
         let puzzleCount = 0;
         let isSpinning = false;
 
-        // 隱性障礙知識庫
+        // 配合圖片上的英文標籤，更新為對應的隱性障礙知識
         const gachaData = [
-            { id: 'p1', name: '情緒障礙', info: '💡【情緒行為障礙】迷思：他們只是脾氣壞、故意唱反調？<br><br>👉 真相：焦慮症、憂鬱症或思覺失調等會使人難以控制情緒與行為。這不是故意的，他們需要適當的醫療支持、溫柔的理解以及一個安全的減壓空間。' },
-            { id: 'p2', name: '自閉症', info: '💡【自閉症光譜】迷思：自閉症者都活在自己的世界、沒有情感？<br><br>👉 真真相：自閉症者往往擁有非常豐富且細膩的情感！只是他們在社交溝通和解讀非語音訊息（如眼神、表情）上面臨挑戰，請嘗試用直接、清晰的言語與他們互動。' },
-            { id: 'p3', name: 'ADHD', info: '💡【過動/注意力缺陷】迷思：ADHD 只是單純靜不下來、長大自然就會好？<br><br>👉 真相：ADHD 是一種神經發展狀況，會影響大腦的專注力控制核心。除了過動，更多時候是無法維持注意力，需要大眾多一分耐心引導，建立規律的作息結構。' }
+            { id: 'p1', name: 'Learning Disabilities (學習障礙)', info: '💡【學習障礙】小知識：他們只是不努力讀書？<br><br>👉 真相：學習障礙是因神經心理功能異常，導致在聽、說、讀、寫、算等學習上有顯著困難。他們智力正常，只是需要不同的學習策略與多一分包容！' },
+            { id: 'p2', name: 'Emotional Disorder (情緒障礙)', info: '💡【情緒行為障礙】小知識：他們只是脾氣壞？<br><br>👉 真相：焦慮症、憂鬱症等狀況會使人難以控制情緒與社交行為。這並非故意唱反調，他們需要溫柔的理解、適當減壓的空間與專業支持。' },
+            { id: 'p3', name: 'ADHD (專注力不足/過動症)', info: '💡【ADHD】小知識：長大自然就會好？<br><br>👉 真相：ADHD 是一種神經發展狀況，會影響大腦專注力與衝動控制核心。不只是靜不下來，更常面臨無法維持注意力的挑戰，需要大眾耐心的引導與結構化作息。' }
         ];
 
-        // 抽扭蛋邏輯
         function drawGacha() {
             const btn = document.getElementById('btn-gacha');
             const display = document.getElementById('gacha-display');
             btn.disabled = true;
-            display.innerHTML = '⚡ 扭蛋轉動中... ⚡';
+            display.innerHTML = '⚡ 爪子移動中... ⚡';
 
             setTimeout(() => {
-                // 隨機抽選
                 const randomItem = gachaData[Math.floor(Math.random() * gachaData.length)];
                 
-                // 標記收集到拼圖
                 if (!collectedPuzzles[randomItem.id]) {
                     collectedPuzzles[randomItem.id] = true;
                     document.getElementById(randomItem.id).classList.add('active');
@@ -294,12 +312,10 @@
                     document.getElementById('puzzle-count').innerText = puzzleCount;
                 }
 
-                // 顯示科普彈窗
-                showPopup(`抽中【${randomItem.name} 扭蛋】🧩`, randomItem.info);
-                display.innerHTML = `<span>🎉 已抽中：${randomItem.name}！<br>獲得拼圖 1 片！</span>`;
+                showPopup(`成功抓到【${randomItem.name}】🧩`, randomItem.info);
+                display.innerHTML = `<span>🎉 成功抓到：${randomItem.name}！</span>`;
                 btn.disabled = false;
 
-                // 檢查是否集齊
                 if (puzzleCount === 3) {
                     btn.style.display = 'none';
                     document.getElementById('btn-go-wheel').style.display = 'inline-block';
@@ -307,51 +323,45 @@
             }, 1000);
         }
 
-        // 切換到轉盤畫面
         function goToWheelStage() {
             document.getElementById('stage-gacha').classList.remove('active');
             document.getElementById('stage-wheel').classList.add('active');
         }
 
-        // 轉盤抽獎邏輯
         function spinWheel() {
             if (isSpinning) return;
             isSpinning = true;
             document.getElementById('btn-spin').disabled = true;
 
             const wheel = document.getElementById('wheel');
-            // 隨機旋轉 4 到 6 圈 + 隨機角度
             const randomDegree = Math.floor(Math.random() * 360) + 1440; 
             wheel.style.transform = `rotate(${randomDegree}deg)`;
 
             setTimeout(() => {
-                // 計算最終停在哪個獎項
                 const actualDropDegree = randomDegree % 360;
                 let prize = "";
                 let prizeDesc = "";
 
-                // 依據轉盤 Conic-gradient 角度分佈計算獎品 (0-90, 90-180, 180-270, 270-360)
                 if (actualDropDegree >= 0 && actualDropDegree < 90) {
                     prize = "多謝參與 📝";
                     prizeDesc = "感謝你參與本次活動！雖然這次沒有抽中實體獎品，但你今天學到了寶貴的隱性障礙知識，這就是給社會最棒的禮物！";
                 } else if (actualDropDegree >= 90 && actualDropDegree < 180) {
                     prize = "大獎：熱水壺 🏺";
-                    prizeDesc = "太幸運了吧！恭喜你獲得【精美熱水壺】一個！🔥<br><br>📸 請立刻對此中獎畫面進行【螢幕截圖】，並前往活動服務台向工作人員出示以領取獎品！";
+                    prizeDesc = "太幸運了吧！恭喜你獲得【精美熱水壺】一個！🔥<br><br>📸 請立刻對此中獎畫面進行【螢幕截圖】，並前往社區中心服務台向工作人員領取獎品！（數量有限，送完即止）";
                 } else if (actualDropDegree >= 180 && actualDropDegree < 270) {
                     prize = "中獎：筆記本 📓";
-                    prizeDesc = "手氣不錯唷！恭喜你獲得【文青風筆記本】一本！✨<br><br>📸 請立刻對此中獎畫面進行【螢幕截圖】，並前往活動服務台向工作人員出示以領取獎品！";
+                    prizeDesc = "手氣不錯唷！恭喜你獲得【文青風筆記本】一本！✨<br><br>📸 請立刻對此中獎畫面進行【螢幕截圖】，並前往社區中心服務台向工作人員領取獎品！（數量有限，送完即止）";
                 } else {
                     prize = "小獎：紙巾 🧻";
-                    prizeDesc = "恭喜你！獲得實用好物【精美好玩紙巾】一包！🎉<br><br>📸 請立刻對此中獎畫面進行【螢幕截圖】，並前往活動服務台向工作人員出示以領取獎品！";
+                    prizeDesc = "恭喜你！獲得實用好物【精美紙巾】一包！🎉<br><br>📸 請立刻對此中獎畫面進行【螢幕截圖】，並前往社區中心服務台向工作人員領取獎品！（數量有限，送完即止）";
                 }
 
                 showPopup("🎁 抽獎結果公佈 🎁", `<h3>${prize}</h3><p>${prizeDesc}</p>`);
                 isSpinning = false;
                 document.getElementById('btn-spin').disabled = false;
-            }, 4000); // 4秒旋轉動畫
+            }, 4000);
         }
 
-        // 彈出視窗輔助函數
         function showPopup(title, text) {
             document.getElementById('popup-title').innerHTML = title;
             document.getElementById('popup-text').innerHTML = text;
