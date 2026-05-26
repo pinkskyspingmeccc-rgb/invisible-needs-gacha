@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Y2K 隱性需求探索互動轉盤</title>
+    <style>
+        /* Y2K 千禧復古美學風格樣式 */
+        * { box-sizing: border-box; font-family: 'Courier New', Courier, monospace, "Microsoft JhengHei"; }
+        body {
+            background: linear-gradient(135deg, #ff007f, #7f00ff, #00f0ff, #ff007f);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #000;
+        }
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        /* Windows 98 復古視窗外殼 */
+        .window {
+            background: #c0c0c0;
+            border: 3px solid;
+            border-color: #fff #dfdfdf #dfdfdf #fff;
+            box-shadow: 5px 5px 0px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 450px;
+            padding: 3px;
+            margin-bottom: 20px;
+        }
+        .title-bar {
+            background: linear-gradient(90deg, #000080, #1084d0);
+            color: white;
+            padding: 4px 6px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+        .title-btn {
+            background: #c0c0c0;
+            border: 1px solid;
+            border-color: #fff #555 #555 #fff;
+            width: 16px;
+            height: 14px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: black;
+        }
+        .window-body {
+            padding: 15px;
+            background: #fff;
+            border: 2px solid #808080;
+            margin-top: 4px;
+            text-align: center;
+        }
+
+        h1 { font-size: 24px; margin: 5px 0; color: #ff007f; text-shadow: 2px 2px #00f0ff; }
+        .subtitle { font-size: 12px; color: #555; margin-bottom: 15px; }
+
+        /* 遊戲區域控制 */
+        .game-section { display: none; }
+        .game-section.active { display: block; }
+
+        /* 扭蛋機樣式 */
+        .gacha-machine {
+            background: #ffb6c1;
+            border: 4px solid #ff007f;
+            border-radius: 20px;
+            padding: 20px;
+            margin: 15px auto;
+            max-width: 300px;
+            position: relative;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
+        }
+        .gacha-screen {
+            background: #e6e6fa;
+            border: 3px dashed #7f00ff;
+            border-radius: 10px;
+            padding: 15px;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 拼圖進度條 */
+        .puzzle-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .puzzle-piece {
+            width: 60px;
+            height: 60px;
+            border: 2px dashed #808080;
+            background: #eee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+            color: #aaa;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        .puzzle-piece.active {
+            border: 2px solid #ff007f;
+            background: #ffecf2;
+            color: #ff007f;
+            box-shadow: 0 0 8px #ff007f;
+            transform: scale(1.05);
+        }
+
+        /* 幸運大轉盤樣式 */
+        .wheel-container {
+            position: relative;
+            width: 260px;
+            height: 260px;
+            margin: 20px auto;
+        }
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 8px solid #ff007f;
+            background: conic-gradient(
+                #ff66b2 0deg 90deg, 
+                #ffcc66 90deg 180deg, 
+                #66ccff 180deg 270deg, 
+                #cc99ff 270deg 360deg
+            );
+            transition: transform 4s cubic-bezier(0.1, 0.8, 0.1, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+        }
+        .wheel-pointer {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 25px solid #fff;
+            filter: drop-shadow(0px 2px 2px rgba(0,0,0,0.5));
+            z-index: 10;
+        }
+
+        /* 按鈕樣式 */
+        .btn {
+            background: #ff007f;
+            color: white;
+            border: 3px solid;
+            border-color: #ff66b2 #aa0055 #aa0055 #ff66b2;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            box-shadow: 2px 2px 0px #000;
+        }
+        .btn:active {
+            border-color: #aa0055 #ff66b2 #ff66b2 #aa0055;
+            transform: translate(1px, 1px);
+            box-shadow: 1px 1px 0px #000;
+        }
+        .btn:disabled {
+            background: #808080;
+            border-color: #bbb #555 #555 #bbb;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* 彈出視窗 */
+        .popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 99;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .popup-overlay.active { display: flex; }
+    </style>
+</head>
+<body>
+
+    <div class="window">
+        <div class="title-bar">
+            <span>🕹️ INVISIBLE_NEEDS_CHALLENGE.EXE</span>
+            <div class="title-btn">X</div>
+        </div>
+        <div class="window-body">
+            <h1>隱性需求探索挑戰</h1>
+            <div class="subtitle">擁抱多元，看見看不見的需求 ⚡</div>
+
+            <div id="stage-gacha" class="game-section active">
+                <p><strong>第一步：嘗試了解隱性障礙！</strong><br>請點擊下方按鈕，從扭蛋機中隨機抽出並認識一種隱性障礙，集滿 3 塊不同的拼圖即可解鎖大轉盤抽獎！</p>
+                
+                <div class="gacha-machine">
+                    <div id="gacha-display" class="gacha-screen">
+                        <span>🔮 點擊 PUSH 開始抽扭蛋</span>
+                    </div>
+                </div>
+
+                <button id="btn-gacha" class="btn" onclick="drawGacha()">PUSH 抽扭蛋</button>
+
+                <p style="margin-top:20px; font-weight:bold;">🧩 我的拼圖收集進度 (<span id="puzzle-count">0</span>/3)：</p>
+                <div class="puzzle-container">
+                    <div id="p1" class="puzzle-piece">情緒障礙</div>
+                    <div id="p2" class="puzzle-piece">自閉症</div>
+                    <div id="p3" class="puzzle-piece">ADHD</div>
+                </div>
+                
+                <button id="btn-go-wheel" class="btn" style="background:#00c0c0; display:none;" onclick="goToWheelStage()">🎉 已集齊！前往大轉盤抽獎 ➡️</button>
+            </div>
+
+            <div id="stage-wheel" class="game-section">
+                <p><strong>第二步：恭喜集齊拼圖！解鎖幸運大轉盤！</strong><br>點擊中間的 SPIN 按鈕，抽取你的活動專屬好禮！</p>
+                
+                <div class="wheel-container">
+                    <div class="wheel-pointer"></div>
+                    <div id="wheel" class="wheel"></div>
+                </div>
+
+                <button id="btn-spin" class="btn" style="background:#7f00ff;" onclick="spinWheel()">SPIN 開始抽獎</button>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="popup" class="popup-overlay">
+        <div class="window" style="max-width:380px;">
+            <div class="title-bar">
+                <span id="popup-title">系統提示</span>
+                <div class="title-btn" onclick="closePopup()">X</div>
+            </div>
+            <div class="window-body">
+                <p id="popup-text" style="font-size:15px; text-align:left; line-height:1.5;"></p>
+                <button class="btn" onclick="closePopup()">確 定</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 遊戲狀態變數
+        let collectedPuzzles = { p1: false, p2: false, p3: false };
+        let puzzleCount = 0;
+        let isSpinning = false;
+
+        // 隱性障礙知識庫
+        const gachaData = [
+            { id: 'p1', name: '情緒障礙', info: '💡【情緒行為障礙】迷思：他們只是脾氣壞、故意唱反調？<br><br>👉 真相：焦慮症、憂鬱症或思覺失調等會使人難以控制情緒與行為。這不是故意的，他們需要適當的醫療支持、溫柔的理解以及一個安全的減壓空間。' },
+            { id: 'p2', name: '自閉症', info: '💡【自閉症光譜】迷思：自閉症者都活在自己的世界、沒有情感？<br><br>👉 真真相：自閉症者往往擁有非常豐富且細膩的情感！只是他們在社交溝通和解讀非語音訊息（如眼神、表情）上面臨挑戰，請嘗試用直接、清晰的言語與他們互動。' },
+            { id: 'p3', name: 'ADHD', info: '💡【過動/注意力缺陷】迷思：ADHD 只是單純靜不下來、長大自然就會好？<br><br>👉 真相：ADHD 是一種神經發展狀況，會影響大腦的專注力控制核心。除了過動，更多時候是無法維持注意力，需要大眾多一分耐心引導，建立規律的作息結構。' }
+        ];
+
+        // 抽扭蛋邏輯
+        function drawGacha() {
+            const btn = document.getElementById('btn-gacha');
+            const display = document.getElementById('gacha-display');
+            btn.disabled = true;
+            display.innerHTML = '⚡ 扭蛋轉動中... ⚡';
+
+            setTimeout(() => {
+                // 隨機抽選
+                const randomItem = gachaData[Math.floor(Math.random() * gachaData.length)];
+                
+                // 標記收集到拼圖
+                if (!collectedPuzzles[randomItem.id]) {
+                    collectedPuzzles[randomItem.id] = true;
+                    document.getElementById(randomItem.id).classList.add('active');
+                    puzzleCount = Object.values(collectedPuzzles).filter(Boolean).length;
+                    document.getElementById('puzzle-count').innerText = puzzleCount;
+                }
+
+                // 顯示科普彈窗
+                showPopup(`抽中【${randomItem.name} 扭蛋】🧩`, randomItem.info);
+                display.innerHTML = `<span>🎉 已抽中：${randomItem.name}！<br>獲得拼圖 1 片！</span>`;
+                btn.disabled = false;
+
+                // 檢查是否集齊
+                if (puzzleCount === 3) {
+                    btn.style.display = 'none';
+                    document.getElementById('btn-go-wheel').style.display = 'inline-block';
+                }
+            }, 1000);
+        }
+
+        // 切換到轉盤畫面
+        function goToWheelStage() {
+            document.getElementById('stage-gacha').classList.remove('active');
+            document.getElementById('stage-wheel').classList.add('active');
+        }
+
+        // 轉盤抽獎邏輯
+        function spinWheel() {
+            if (isSpinning) return;
+            isSpinning = true;
+            document.getElementById('btn-spin').disabled = true;
+
+            const wheel = document.getElementById('wheel');
+            // 隨機旋轉 4 到 6 圈 + 隨機角度
+            const randomDegree = Math.floor(Math.random() * 360) + 1440; 
+            wheel.style.transform = `rotate(${randomDegree}deg)`;
+
+            setTimeout(() => {
+                // 計算最終停在哪個獎項
+                const actualDropDegree = randomDegree % 360;
+                let prize = "";
+                let prizeDesc = "";
+
+                // 依據轉盤 Conic-gradient 角度分佈計算獎品 (0-90, 90-180, 180-270, 270-360)
+                if (actualDropDegree >= 0 && actualDropDegree < 90) {
+                    prize = "多謝參與 📝";
+                    prizeDesc = "感謝你參與本次活動！雖然這次沒有抽中實體獎品，但你今天學到了寶貴的隱性障礙知識，這就是給社會最棒的禮物！";
+                } else if (actualDropDegree >= 90 && actualDropDegree < 180) {
+                    prize = "大獎：熱水壺 🏺";
+                    prizeDesc = "太幸運了吧！恭喜你獲得【精美熱水壺】一個！🔥<br><br>📸 請立刻對此中獎畫面進行【螢幕截圖】，並前往活動服務台向工作人員出示以領取獎品！";
+                } else if (actualDropDegree >= 180 && actualDropDegree < 270) {
+                    prize = "中獎：筆記本 📓";
+                    prizeDesc = "手氣不錯唷！恭喜你獲得【文青風筆記本】一本！✨<br><br>📸 請立刻對此中獎畫面進行【螢幕截圖】，並前往活動服務台向工作人員出示以領取獎品！";
+                } else {
+                    prize = "小獎：紙巾 🧻";
+                    prizeDesc = "恭喜你！獲得實用好物【精美好玩紙巾】一包！🎉<br><br>📸 請立刻對此中獎畫面進行【螢幕截圖】，並前往活動服務台向工作人員出示以領取獎品！";
+                }
+
+                showPopup("🎁 抽獎結果公佈 🎁", `<h3>${prize}</h3><p>${prizeDesc}</p>`);
+                isSpinning = false;
+                document.getElementById('btn-spin').disabled = false;
+            }, 4000); // 4秒旋轉動畫
+        }
+
+        // 彈出視窗輔助函數
+        function showPopup(title, text) {
+            document.getElementById('popup-title').innerHTML = title;
+            document.getElementById('popup-text').innerHTML = text;
+            document.getElementById('popup').classList.add('active');
+        }
+        function closePopup() {
+            document.getElementById('popup').classList.remove('active');
+        }
+    </script>
+</body>
+</html>
